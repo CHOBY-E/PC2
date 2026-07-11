@@ -1,53 +1,47 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
-import  LoginPage  from "../pages/LoginPage";
-import  RegisterPage  from "../pages/RegisterPage";
-import  AnimePage  from "../pages/AnimePage";
-import  FavoritesPage  from "../pages/FavoritesPage";
-import  HistoryPage  from "../pages/HistoryPage";
-import  MainLayout  from "../layouts/Mainlayout";
-import  PrivateRoute  from "./PrivateRoute";
-
-
+import LoginPage from "../pages/LoginPage";
+import RegisterPage from "../pages/RegisterPage";
+import DashboardPage from "../pages/DashboardPage";
+import ProductNewPage from "../pages/ProductNewPage";
+import ProductDetailPage from "../pages/ProductDetailPage";
+import NotFoundPage from "../pages/NotFoundPage";
+import MainLayout from "../layouts/Mainlayout";
+import PrivateRoute from "./PrivateRoute";
 
 function AppRouter() {
     return (
         <Routes>
-            <Route path="/" element={<LoginPage />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route
-                path="/animes"
-                element={
-                    <MainLayout>
-                        <AnimePage />
-                    </MainLayout>
-                }
-            />
- 
-            <Route
-                path="/favorites"
+                path="/dashboard"
                 element={
                     <PrivateRoute>
                         <MainLayout>
-                            <FavoritesPage />
+                            <DashboardPage />
                         </MainLayout>
                     </PrivateRoute>
                 }
             />
- 
-            <Route
-                path="/history"
-                element={
+            <Route path="/products/new" element={
                     <PrivateRoute>
                         <MainLayout>
-                            <HistoryPage />
+                            <ProductNewPage />
                         </MainLayout>
                     </PrivateRoute>
                 }
             />
- 
-            <Route path="*" element={<Navigate to="/animes" replace />} />
+            <Route path="/products/:id" element={
+                    <PrivateRoute>
+                        <MainLayout>
+                            <ProductDetailPage />
+                        </MainLayout>
+                    </PrivateRoute>
+                }
+            />
+            <Route path="*" element={<NotFoundPage />} />
         </Routes>
     );
 }

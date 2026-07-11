@@ -1,21 +1,20 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import  useAuth  from "../hooks/useAuth";
+import useAuth from "../hooks/useAuth";
 import Input from "../components/Input";
 import { Button } from "../components/Button";
+import { getErrorMessage } from "../utils/errors";
 
 const containerClass =
     "flex min-h-[calc(100vh-56px)] items-center justify-center bg-slate-800 px-4";
 
-const cardClass =
-    "w-full max-w-sm rounded-2xl bg-black p-8 shadow-lg";
+const cardClass = "w-full max-w-sm rounded-2xl bg-black p-8 shadow-lg";
 
 const fields = [
-    { id: "name", label: "Nombre", type: "text" },
+    { id: "username", label: "Usuario", type: "text" },
     { id: "email", label: "Correo", type: "email" },
     { id: "password", label: "Contraseña", type: "password" },
-    {id: "fullname", label: "fullname", type: "fullname", },
+    { id: "fullname", label: "Nombre completo", type: "text" },
 ] as const;
 
 export default function RegisterPage() {
@@ -23,7 +22,7 @@ export default function RegisterPage() {
     const navigate = useNavigate();
 
     const [form, setForm] = useState({
-        name: "",
+        username: "",
         email: "",
         password: "",
         fullname: "",
@@ -43,19 +42,15 @@ export default function RegisterPage() {
         e.preventDefault();
         setError(null);
 
-        const { name, email, password, fullname} = form;
+        const { username, email, password, fullname } = form;
 
         setIsLoading(true);
 
         try {
-            await register(name, email, password, fullname);
-            navigate("/products");
+            await register(username, email, password, fullname);
+            navigate("/dashboard");
         } catch (err) {
-            const message = axios.isAxiosError(err)
-                ? (err.response?.data?.message ?? "no se pudo crear la cuenta")
-                : "no se pudo conectar al servidor";
-
-            setError(message);
+            setError(getErrorMessage(err));
         } finally {
             setIsLoading(false);
         }
@@ -65,11 +60,9 @@ export default function RegisterPage() {
         <div className={containerClass}>
             <div className={cardClass}>
                 <div className="mb-6 text-center">
-
-                    <h1 className="text-2xl font-bold text-slate-800">
+                    <h1 className="text-2xl font-bold text-slate-100">
                         Crear cuenta
                     </h1>
-
                 </div>
 
                 <form
@@ -88,7 +81,7 @@ export default function RegisterPage() {
                     ))}
 
                     {error && (
-                        <p className="text-sm text-red-600">{error}</p>
+                        <p className="text-sm text-red-400">{error}</p>
                     )}
 
                     <Button type="submit" isLoading={isLoading}>
@@ -96,11 +89,11 @@ export default function RegisterPage() {
                     </Button>
                 </form>
 
-                <p className="mt-5 text-center text-sm text-slate-500">
+                <p className="mt-5 text-center text-sm text-slate-400">
                     ¿Ya tienes cuenta?{" "}
                     <Link
                         to="/login"
-                        className="font-semibold text-indigo-600 hover:underline"
+                        className="font-semibold text-indigo-400 hover:underline"
                     >
                         Inicia sesión
                     </Link>

@@ -1,10 +1,10 @@
 
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import  useAuth  from "../hooks/useAuth";
-import  Input  from "../components/Input";
+import useAuth from "../hooks/useAuth";
+import Input from "../components/Input";
 import { Button } from "../components/Button";
+import { getErrorMessage } from "../utils/errors";
  
 export default function LoginPage() {
     const { login } = useAuth();
@@ -21,12 +21,9 @@ export default function LoginPage() {
         setIsLoading(true);
         try {
             await login(email, password);
-            navigate("/animes");
+            navigate("/dashboard");
         } catch (err) {
-            const message = axios.isAxiosError(err)
-                ? (err.response?.data?.message ?? "Credenciales inválidas")
-                : "No se pudo conectar al servidor";
-            setError(message);
+            setError(getErrorMessage(err));
         } finally {
             setIsLoading(false);
         }

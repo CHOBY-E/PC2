@@ -1,5 +1,5 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import * as productsService from "../services/productsService";
 import Input from "../components/Input";
 import { Button } from "../components/Button";
@@ -10,7 +10,8 @@ const containerClass =
 
 const cardClass = "w-full max-w-sm rounded-2xl bg-black p-8 shadow-lg";
 
-export default function ProductNewPage() {
+export default function ProductDetailPage() {
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
     const [form, setForm] = useState({
@@ -22,26 +23,62 @@ export default function ProductNewPage() {
         imageUrl: "",
     });
 
+    const [isFetching, setIsFetching] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [notFound, setNotFound] = useState(false);
+
+    useEffect(() => {
+        if (!id) return;
+        const productId = id;
+        let isMounted = true;
+
+        async function fetchProduct() {
+            setIsFetching(true);
+            setError(null);
+            setNotFound(false);
+            try {
+                const response = await productsService.getProductById(productId);
+                if (!isMounted) return;
+                const product = response.data;
+                setForm({
+                    name: product.name,
+                    description: product.description,
+                    category: product.category,
+                    price: String(product.price),
+                    stock: String(product.stock),
+                    imageUrl: product.imageUrl ?? "",
+                });
+            } catch (err) {
+                if (!isMounted) return;
+                setError(getErrorMessage(err));
+                setNotFound(true);
+            } finally {
+                if (isMounted) setIsFetching(false);
+            }
+        }
+
+        fetchProduct();
+        return () => {
+            isMounted = false;
+        };
+    }, [id]);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setForm((prev) => ({
-            ...prev,
-            [e.target.name]: e.target.value,
-        }));
+        setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
+        if (!id) return;
         setError(null);
+        setIsSaving(true);
 
         const { name, description, category, price, stock, imageUrl } = form;
 
-        setIsLoading(true);
-
         try {
-            await productsService.createProduct({
+            await productsService.updateProduct(id, {
                 name,
                 description,
                 category,
@@ -53,8 +90,51 @@ export default function ProductNewPage() {
         } catch (err) {
             setError(getErrorMessage(err));
         } finally {
-            setIsLoading(false);
+            setIsSaving(false);
         }
+    }
+
+    async function handleDelete() {
+        if (!id) return;
+        const confirmed = window.confirm(
+            "¿Seguro que deseas eliminar este producto? Esta acción no se puede deshacer."
+        );
+        if (!confirmed) return;
+
+        setError(null);
+        setIsDeleting(true);
+        try {
+            await productsService.deleteProduct(id);
+            navigate("/dashboard");
+        } catch (err) {
+            setError(getErrorMessage(err));
+        } finally {
+            setIsDeleting(false);
+        }
+    }
+
+    if (isFetching) {
+        return (
+            <div className={containerClass}>
+                <p className="text-slate-300">Cargando producto...</p>
+            </div>
+        );
+    }
+
+    if (notFound) {
+        return (
+            <div className={containerClass}>
+                <div className={cardClass}>
+                    <p className="text-center text-red-400">{error}</p>
+                    <Link
+                        to="/dashboard"
+                        className="mt-4 block text-center font-semibold text-indigo-400 hover:underline"
+                    >
+                        Volver al catálogo
+                    </Link>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -62,7 +142,7 @@ export default function ProductNewPage() {
             <div className={cardClass}>
                 <div className="mb-6 text-center">
                     <h1 className="text-2xl font-bold text-slate-100">
-                        Crear producto
+                        Editar producto
                     </h1>
                 </div>
 
@@ -128,8 +208,17 @@ export default function ProductNewPage() {
 
                     {error && <p className="text-sm text-red-400">{error}</p>}
 
-                    <Button type="submit" isLoading={isLoading}>
-                        Guardar producto
+                    <Button type="submit" isLoading={isSaving}>
+                        Guardar cambios
+                    </Button>
+
+                    <Button
+                        type="button"
+                        isLoading={isDeleting}
+                        onClick={handleDelete}
+                        className="bg-red-600 hover:bg-red-500"
+                    >
+                        Eliminar producto
                     </Button>
                 </form>
 
@@ -138,7 +227,7 @@ export default function ProductNewPage() {
                         to="/dashboard"
                         className="font-semibold text-indigo-400 hover:underline"
                     >
-                        Cancelar
+                        Volver al catálogo
                     </Link>
                 </p>
             </div>

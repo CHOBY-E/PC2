@@ -1,5 +1,5 @@
 
-import { createContext, useState, type ReactNode } from "react";
+import { createContext, useEffect, useState, type ReactNode } from "react";
 import * as authService from "../services/authService";
 import type { AuthContextValue } from "../types.ts";
 import type { User } from "../types.ts";
@@ -49,6 +49,15 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         setToken(null);
         setUser(null);
     }
+
+    useEffect(() => {
+        function handleUnauthorized() {
+            logout();
+        }
+        window.addEventListener("techstore:unauthorized", handleUnauthorized);
+        return () =>
+            window.removeEventListener("techstore:unauthorized", handleUnauthorized);
+    }, []);
  
     return (
         <AuthContext.Provider
